@@ -1,42 +1,47 @@
 const express = require("express");
 const fetch = (...args) => import("node-fetch").then(({ default: fetch }) => fetch(...args));
 const cors = require("cors");
+require('dotenv').config();
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 
-
-const SHIPROCKET_EMAIL = "ashishindu0@gmail.com";
-const SHIPROCKET_PASSWORD = "qurvii123T$";
+const SHIPROCKET_EMAIL = process.env.USER_NAME;
+const SHIPROCKET_PASSWORD = process.env.PASSWORD;
 let authToken = "";
+let tokenExpiryTime = 0;  // Store token expiry time in milliseconds
 
 // Function to get authentication token
 const getAuthToken = async () => {
-    try {
-      const response = await fetch("https://apiv2.shiprocket.in/v1/external/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: SHIPROCKET_EMAIL, password: SHIPROCKET_PASSWORD })
-      });
-      
-      const data = await response.json();
-      console.log("Shiprocket API Response:", data); // Log full response
-      
-      if (data.token) {
-        authToken = data.token;
-        console.log("New Token Generated:", authToken);
-      } else {
-        console.error("Error: Token not found in response");
-      }
-    } catch (error) {
-      console.error("Error getting auth token:", error);
+  try {
+    const response = await fetch("https://apiv2.shiprocket.in/v1/external/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: SHIPROCKET_EMAIL, password: SHIPROCKET_PASSWORD })
+    });
+    
+    const data = await response.json();
+    console.log("Shiprocket API Response:", data); // Log full response
+    
+    if (data.token) {
+      authToken = data.token;
+      tokenExpiryTime = Date.now() + 3600000; // Assuming token is valid for 1 hour
+      console.log("New Token Generated:", authToken);
+    } else {
+      console.error("Error: Token not found in response");
     }
-  };
-  
-// Middleware to ensure authentication token is available
+  } catch (error) {
+    console.error("Error getting auth token:", error);
+  }
+};
+
+// Middleware to ensure authentication token is available and valid
 const ensureAuthToken = async (req, res, next) => {
-  if (!authToken) await getAuthToken();
+  // If the token doesn't exist or has expired, get a new one
+  if (!authToken || Date.now() > tokenExpiryTime) {
+    await getAuthToken();
+  }
   next();
 };
 
@@ -63,5 +68,5 @@ app.get("/track/:awb", ensureAuthToken, async (req, res) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
-  getAuthToken();
+  getAuthToken(); // Initial token generation when the server starts
 });
