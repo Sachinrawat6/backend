@@ -9,6 +9,7 @@ app.use(cors());
 
 const SHIPROCKET_EMAIL = process.env.USER_NAME;
 const SHIPROCKET_PASSWORD = process.env.PASSWORD;
+const DELHIVERY_TOKEN = process.env.DELHIVERY_TOKEN;
 let authToken = "";
 let tokenExpiryTime = 0;  // Store token expiry time in milliseconds
 
@@ -46,7 +47,7 @@ const ensureAuthToken = async (req, res, next) => {
 };
 
 // Fetch tracking data
-app.get("/track/:awb", ensureAuthToken, async (req, res) => {
+app.get("/track/shiprocket/:awb", ensureAuthToken, async (req, res) => {
   try {
     const { awb } = req.params;
     const response = await fetch(`https://apiv2.shiprocket.in/v1/external/courier/track/awb/${awb}`, {
@@ -63,6 +64,32 @@ app.get("/track/:awb", ensureAuthToken, async (req, res) => {
     res.status(500).json({ error: "Failed to fetch tracking data" });
   }
 });
+
+
+
+app.get('/track/delhivery', async (req, res) => {
+  const { trackingNumber } = req.query;
+
+  if (!trackingNumber) {
+      return res.status(400).json({ error: "Tracking number is required." });
+  }
+
+  const apiUrl = `https://track.delhivery.com/api/v1/packages/json/?waybill=${trackingNumber}`;
+  
+  try {
+      const response = await fetch(apiUrl, {
+          headers: { "Authorization": `Token ${DELHIVERY_TOKEN}` },
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch tracking data.");
+
+      const data = await response.json();
+      res.json(data);
+  } catch (error) {
+      res.status(500).json({ error: "Tracking failed.", details: error.message });
+  }
+});
+
 
 // Start server
 const PORT = process.env.PORT || 5000;
