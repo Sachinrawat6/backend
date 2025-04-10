@@ -91,9 +91,37 @@ app.get('/track/delhivery', async (req, res) => {
 });
 
 
+app.get('/track/:id', async (req, res) => {
+  const trackingId = req.params.id;
+  const apiUrl = `https://track.delhivery.com/api/v1/packages/json/?ref_ids=${trackingId}`;
+
+  try {
+    const response = await fetch(apiUrl, {
+      headers: {
+        "Authorization": `Token ${DELHIVERY_TOKEN}`,
+      },
+    });
+
+    if (!response.ok) throw new Error("Failed to fetch tracking data.");
+
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: "Tracking failed.", details: error.message });
+  }
+});
+
+
 // Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
   getAuthToken(); // Initial token generation when the server starts
 });
+
+
+
+// https://backend-hug2.onrender.com/track/delhivery?trackingNumber=34588310013473
+// https://backend-hug2.onrender.com/track/shiprocket/348269302894
+
+// apik_f0MCwOCraWkimU5Mg9uzAtTj0HGqMX
