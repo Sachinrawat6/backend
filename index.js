@@ -58,7 +58,10 @@ app.get("/track/shiprocket/:awb", ensureAuthToken, async (req, res) => {
     if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
     
     const trackingData = await response.json();
-    res.json(trackingData);
+    setTimeout(() => {
+      res.json(trackingData);  
+    }, 2000);
+    
   } catch (error) {
     console.error("Error fetching tracking data:", error);
     res.status(500).json({ error: "Failed to fetch tracking data" });
@@ -75,6 +78,7 @@ app.get('/track/delhivery', async (req, res) => {
   }
 
   const apiUrl = `https://track.delhivery.com/api/v1/packages/json/?waybill=${trackingNumber}`;
+  // const apiUrl = `https://track.delhivery.com/api/v1/packages/json/?ref_nos=${trackingNumber}`;
   
   try {
       const response = await fetch(apiUrl, {
@@ -84,7 +88,10 @@ app.get('/track/delhivery', async (req, res) => {
       if (!response.ok) throw new Error("Failed to fetch tracking data.");
 
       const data = await response.json();
-      res.json(data);
+      setTimeout(() => {
+        res.json(data);
+      }, 2000);
+      
   } catch (error) {
       res.status(500).json({ error: "Tracking failed.", details: error.message });
   }
@@ -105,7 +112,10 @@ app.get('/track/:id', async (req, res) => {
     if (!response.ok) throw new Error("Failed to fetch tracking data.");
 
     const data = await response.json();
-    res.json(data);
+    setTimeout(() => {
+      res.json(data);
+    }, 2000);
+    return
   } catch (error) {
     res.status(500).json({ error: "Tracking failed.", details: error.message });
   }
